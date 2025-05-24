@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { initGA, pageview, event } from './g4-tag'
 
 // Test event function
@@ -19,7 +19,7 @@ const testGA4Event = () => {
     console.log('GA4 event sent')
 }
 
-export function GA4Provider({ children }: { children: React.ReactNode }) {
+function GA4ProviderContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const searchParams = useSearchParams()
 
@@ -43,4 +43,12 @@ export function GA4Provider({ children }: { children: React.ReactNode }) {
     }, [pathname, searchParams])
 
     return <>{children}</>
+}
+
+export function GA4Provider({ children }: { children: React.ReactNode }) {
+    return (
+        <Suspense fallback={null}>
+            <GA4ProviderContent>{children}</GA4ProviderContent>
+        </Suspense>
+    )
 }
