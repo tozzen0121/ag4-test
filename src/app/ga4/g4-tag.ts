@@ -10,7 +10,7 @@ declare global {
     }
 }
 
-export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-V0EVHH2J6D'
+export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-1RBGXM1DY8'
 
 // Initialize GA4
 export const initGA = (): void => {
