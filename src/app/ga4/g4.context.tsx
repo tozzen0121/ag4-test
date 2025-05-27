@@ -1,8 +1,8 @@
 'use client'
 
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { initGA, pageview, event, verifyGA4Setup } from '@/lib/ga4/g4-tag'
+import { useEffect, useState, Suspense } from 'react'
+import { initGA, pageview, event, verifyGA4Setup } from './g4-tag'
 
 // Test event function
 const testGA4Event = () => {
@@ -19,7 +19,7 @@ const testGA4Event = () => {
     console.log('GA4 event sent')
 }
 
-export function GA4Provider({ children }: { children: React.ReactNode }) {
+function GA4ProviderContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const [isInitialized, setIsInitialized] = useState(false)
@@ -64,12 +64,20 @@ export function GA4Provider({ children }: { children: React.ReactNode }) {
 
     // Add debug info in development
     // if (process.env.NODE_ENV === 'development') {
-        console.log('GA4 Status:', {
-            isInitialized,
-            isVerified,
-            trackingId: process.env.NEXT_PUBLIC_GA_ID
-        })
+    console.log('GA4 Status:', {
+        isInitialized,
+        isVerified,
+        trackingId: process.env.NEXT_PUBLIC_GA_ID
+    })
     // }
 
     return <>{children}</>
+}
+
+export function GA4Provider({ children }: { children: React.ReactNode }) {
+    return (
+        <Suspense fallback={null}>
+            <GA4ProviderContent>{children}</GA4ProviderContent>
+        </Suspense>
+    )
 }
