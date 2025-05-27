@@ -63,13 +63,13 @@ export function GA4Provider({ children }: { children: React.ReactNode }) {
     }, [pathname, searchParams, isInitialized, isVerified])
 
     // Add debug info in development
-    if (process.env.NODE_ENV === 'development') {
+    // if (process.env.NODE_ENV === 'development') {
         console.log('GA4 Status:', {
             isInitialized,
             isVerified,
             trackingId: process.env.NEXT_PUBLIC_GA_ID
         })
-    }
+    // }
 
     return <>{children}</>
 }
