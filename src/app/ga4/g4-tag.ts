@@ -10,39 +10,58 @@ declare global {
     }
 }
 
-export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-1RBGXM1DY8'
+export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || ''
 
 // Initialize GA4
-export const initGA = (): void => {
-    if (!GA_TRACKING_ID || typeof window === 'undefined') return
+export const initGA = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        if (!GA_TRACKING_ID || typeof window === 'undefined') {
+            reject(new Error('GA_TRACKING_ID is not defined or window is undefined'))
+            return
+        }
 
-    // Initialize dataLayer
-    window.dataLayer = window.dataLayer || []
+        // Initialize dataLayer
+        window.dataLayer = window.dataLayer || []
 
-    // Load GA4 script
-    const script = document.createElement('script')
-    script.async = true
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`
-    document.head.appendChild(script)
+        // Load GA4 script
+        const script = document.createElement('script')
+        script.async = true
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`
+        
+        script.onload = () => {
+            // Initialize gtag
+            window.gtag = function gtag(...args: unknown[]) {
+                window.dataLayer.push(args)
+            }
 
-    // Initialize gtag
-    window.gtag = function gtag(...args: unknown[]) {
-        window.dataLayer.push(args)
-    }
+            // Set initial timestamp
+            window.gtag('js', new Date())
 
-    // Set initial timestamp
-    window.gtag('js', new Date())
+            // Configure GA4 with production settings
+            window.gtag('config', GA_TRACKING_ID, {
+                send_page_view: false,
+                debug_mode: true,
+                cookie_flags: 'SameSite=NoneSecure',
+                cookie_domain: 'auto',
+                cookie_expires: 28 * 24 * 60 * 60,
+            })
 
-    window.gtag('consent', 'default', {
-        analytics_storage: 'granted',
-        ad_storage: 'granted',
-      });
+            // Set default consent
+            window.gtag('consent', 'default', {
+                analytics_storage: 'granted',
+                ad_storage: 'granted',
+            })
 
-      
-    // Configure GA4
-    window.gtag('config', GA_TRACKING_ID, {
-        send_page_view: false, // We'll handle page views manually
-        debug_mode: true,
+            console.log('GA4 initialized successfully')
+            resolve()
+        }
+
+        script.onerror = (error) => {
+            console.error('Failed to load GA4 script:', error)
+            reject(error)
+        }
+
+        document.head.appendChild(script)
     })
 }
 
@@ -271,4 +290,35 @@ export const setUserProperties = (properties: Record<string, unknown>): void => 
     if (!GA_TRACKING_ID || typeof window === 'undefined') return
 
     window.gtag('set', 'user_properties', properties)
+}
+
+// Add a verification function
+export const verifyGA4Setup = async (): Promise<boolean> => {
+    if (!GA_TRACKING_ID || typeof window === 'undefined') return false
+    
+    try {
+        // Check if gtag is defined
+        if (typeof window.gtag !== 'function') {
+            console.error('GA4 gtag function not found')
+            return false
+        }
+
+        // Check if dataLayer exists
+        if (!Array.isArray(window.dataLayer)) {
+            console.error('GA4 dataLayer not found')
+            return false
+        }
+
+        // Send a test event
+        window.gtag('event', 'ga4_verification', {
+            event_category: 'system',
+            event_label: 'GA4 Setup Verification',
+            non_interaction: true
+        })
+
+        return true
+    } catch (error) {
+        console.error('GA4 verification failed:', error)
+        return false
+    }
 }
